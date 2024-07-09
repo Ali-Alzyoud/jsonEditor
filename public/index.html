@@ -1,0 +1,101 @@
+<html>
+    <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+        <style>
+                button {
+                background-color: #04AA6D;
+                border: none;
+                color: white;
+                padding: 15px 32px;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                font-size: 16px;
+                margin: 4px 2px;
+                cursor: pointer;
+                }
+        </style>
+    </head>
+<body style="direction: rtl;">
+    <div id="question-id">Loading ...</div>
+    <script>
+        function getUrlVars()
+        {
+            var vars = [], hash;
+            var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+            for(var i = 0; i < hashes.length; i++)
+            {
+                hash = hashes[i].split('=');
+                vars.push(hash[0]);
+                vars[hash[0]] = hash[1];
+            }
+            return vars;
+        }
+        async function loadPage(){
+            $("#question-id").text("Loading ...");
+            let index = Number(getUrlVars()?.["page"] || localStorage.getItem("page") || 1);
+            localStorage.setItem("page",index);
+            const res = await fetch(`/questions/${index}`);
+            const question = await res.json();
+            let isModified = false;
+            $("#question-id").text("");
+            $("#question-id").append(`
+            <div> Page ${index}</div>
+                <button id="btn-next-id"> التالي </button>
+                <button id="btn-prev-id"> السابق </button>
+                <div>
+                    <p>${question.Title}</p>
+                    ${question.Questions.map((q, i) => {
+                        return `
+                        <p>السؤال ${i+1}</p>
+                        <textarea style="width:800px;height:70px;padding:16px;" id="q-${i}">${q[0]}</textarea>
+                        <br/>
+                        <textarea style="width:800px;height:100px;padding:16px;" id="n-${i}">${q[1]}</textarea>
+                            `
+                    }).join("</br></br>")}
+                </div>
+            `);
+            $("[id^=q-]").on("input",function(e){
+                const qIndex = Number(e.target.id.split("-")[1]);
+                question.Questions[qIndex][0] = e.target.value;
+                $("#btn-next-id").text("حفظ التعديلات");
+                $("#btn-prev-id").css({"display":"none"});
+                isModified = true;
+            })
+            $("[id^=n-]").on("input",function(e){
+                const nIndex = Number(e.target.id.split("-")[1]);
+                question.Questions[nIndex][1] = e.target.value;
+                $("#btn-next-id").text("حفظ التعديلات")
+                $("#btn-prev-id").css({"display":"none"});
+                isModified = true;
+            })
+            $("[id^=btn-]").on("click", function(e){
+                if(!isModified){
+                    if(e.target.id === "btn-next-id"){
+                        index++;
+                    }else {
+                        index--;
+                    }
+                    index = Math.max(index, 0);
+                    window.location.search = `?page=${index}`
+                } else {
+                    try {
+                        fetch('/questions/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                                body: JSON.stringify(question)
+                            });
+                            window.location.search = `?page=${index}`
+                    } catch (error) {
+                        alert("فشل عملية الحفظ")
+                    }
+                    
+                }
+            });
+        }
+        loadPage();
+    </script>
+</body>
+</html>
