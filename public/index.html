@@ -39,6 +39,7 @@
             let index = Number(getUrlVars()?.["page"] || localStorage.getItem("page") || 1);
             localStorage.setItem("page",index);
             let count = 0;
+            let reviewed = localStorage.getItem("name") || "";
 
             try {
                 const res = await fetch(`/questions/count`);
@@ -49,7 +50,7 @@
             }
             try {
                 const res = await fetch(`/questions/${index}`);
-                const question = await res.json();
+                const {question, reviewed:reviewedBy} = await res.json();
 
                 let isModified = false;
                 $("#question-id").text("");
@@ -57,6 +58,10 @@
                     <div> Page ${index} / ${count}</div>
                         <button id="btn-next-id"> التالي </button>
                         <button id="btn-prev-id"> السابق </button>
+                        <input id="name-id" placeholder="your name" value="${reviewed}"/>
+                        ${!reviewedBy? 
+                            `<button style="background:red" id="btn-reviewed-id"> هل تمت مراجعته ؟</button>`:
+                            `<button id="btn-reviewed-id"> تمت مراجعته من ${reviewedBy}</button>`}
                         <div>
                             <p>${question.Title}</p>
                             ${question.Questions.map((q, i) => {
@@ -69,6 +74,10 @@
                             }).join("</br></br>")}
                         </div>
                     `);
+                $("#name-id").on("input",function(e){
+                    reviewed = e.target.value;
+                    localStorage.setItem("name", reviewed);
+                });
                 $("[id^=q-]").on("input",function(e){
                     const qIndex = Number(e.target.id.split("-")[1]);
                     question.Questions[qIndex][0] = e.target.value;
@@ -84,6 +93,9 @@
                     isModified = true;
                 })
                 $("[id^=btn-]").on("click", function(e){
+                    if(e.target.id === "btn-reviewed-id") {
+                        isModified = true;
+                    }
                     if(!isModified){
                         if(e.target.id === "btn-next-id"){
                             index++;
@@ -93,13 +105,17 @@
                         index = Math.max(index, 0);
                         window.location.search = `?page=${index}`
                     } else {
+                        if(!reviewed){
+                            alert("الرجاء ادخال الاسم اولا")
+                            return;
+                        }
                         try {
                             fetch('/questions/', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json'
                                 },
-                                    body: JSON.stringify(question)
+                                    body: JSON.stringify({question, reviewed})
                                 });
                                 window.location.search = `?page=${index}`
                         } catch (error) {
