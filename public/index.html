@@ -14,6 +14,9 @@
                 margin: 4px 2px;
                 cursor: pointer;
                 }
+                p{
+                    font-size: 200%;
+                }
         </style>
     </head>
 <body style="direction: rtl;">
@@ -35,65 +38,93 @@
             $("#question-id").text("Loading ...");
             let index = Number(getUrlVars()?.["page"] || localStorage.getItem("page") || 1);
             localStorage.setItem("page",index);
-            const res = await fetch(`/questions/${index}`);
-            const question = await res.json();
-            let isModified = false;
-            $("#question-id").text("");
-            $("#question-id").append(`
-            <div> Page ${index}</div>
-                <button id="btn-next-id"> التالي </button>
-                <button id="btn-prev-id"> السابق </button>
-                <div>
-                    <p>${question.Title}</p>
-                    ${question.Questions.map((q, i) => {
-                        return `
-                        <p>السؤال ${i+1}</p>
-                        <textarea style="width:800px;height:70px;padding:16px;" id="q-${i}">${q[0]}</textarea>
-                        <br/>
-                        <textarea style="width:800px;height:100px;padding:16px;" id="n-${i}">${q[1]}</textarea>
-                            `
-                    }).join("</br></br>")}
-                </div>
-            `);
-            $("[id^=q-]").on("input",function(e){
-                const qIndex = Number(e.target.id.split("-")[1]);
-                question.Questions[qIndex][0] = e.target.value;
-                $("#btn-next-id").text("حفظ التعديلات");
-                $("#btn-prev-id").css({"display":"none"});
-                isModified = true;
-            })
-            $("[id^=n-]").on("input",function(e){
-                const nIndex = Number(e.target.id.split("-")[1]);
-                question.Questions[nIndex][1] = e.target.value;
-                $("#btn-next-id").text("حفظ التعديلات")
-                $("#btn-prev-id").css({"display":"none"});
-                isModified = true;
-            })
-            $("[id^=btn-]").on("click", function(e){
-                if(!isModified){
-                    if(e.target.id === "btn-next-id"){
-                        index++;
-                    }else {
-                        index--;
+            let count = 0;
+
+            try {
+                const res = await fetch(`/questions/count`);
+                const data = await res.json();
+                count = Number(data?.count);
+            } catch (error) {
+                
+            }
+            try {
+                const res = await fetch(`/questions/${index}`);
+                const question = await res.json();
+
+                let isModified = false;
+                $("#question-id").text("");
+                $("#question-id").append(`
+                    <div> Page ${index} / ${count}</div>
+                        <button id="btn-next-id"> التالي </button>
+                        <button id="btn-prev-id"> السابق </button>
+                        <div>
+                            <p>${question.Title}</p>
+                            ${question.Questions.map((q, i) => {
+                                return `
+                                <p>السؤال ${i+1}</p>
+                                <textarea style="width:800px;height:70px;padding:16px;" id="q-${i}">${q[0]}</textarea>
+                                <br/>
+                                <textarea style="width:800px;height:100px;padding:16px;" id="n-${i}">${q[1]}</textarea>
+                                    `
+                            }).join("</br></br>")}
+                        </div>
+                    `);
+                $("[id^=q-]").on("input",function(e){
+                    const qIndex = Number(e.target.id.split("-")[1]);
+                    question.Questions[qIndex][0] = e.target.value;
+                    $("#btn-next-id").text("حفظ التعديلات");
+                    $("#btn-prev-id").css({"display":"none"});
+                    isModified = true;
+                })
+                $("[id^=n-]").on("input",function(e){
+                    const nIndex = Number(e.target.id.split("-")[1]);
+                    question.Questions[nIndex][1] = e.target.value;
+                    $("#btn-next-id").text("حفظ التعديلات")
+                    $("#btn-prev-id").css({"display":"none"});
+                    isModified = true;
+                })
+                $("[id^=btn-]").on("click", function(e){
+                    if(!isModified){
+                        if(e.target.id === "btn-next-id"){
+                            index++;
+                        }else {
+                            index--;
+                        }
+                        index = Math.max(index, 0);
+                        window.location.search = `?page=${index}`
+                    } else {
+                        try {
+                            fetch('/questions/', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                    body: JSON.stringify(question)
+                                });
+                                window.location.search = `?page=${index}`
+                        } catch (error) {
+                            alert("فشل عملية الحفظ")
+                        }
+                        
                     }
-                    index = Math.max(index, 0);
-                    window.location.search = `?page=${index}`
-                } else {
-                    try {
-                        fetch('/questions/', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                                body: JSON.stringify(question)
-                            });
-                            window.location.search = `?page=${index}`
-                    } catch (error) {
-                        alert("فشل عملية الحفظ")
-                    }
-                    
-                }
-            });
+                });
+            } catch (error) {
+                $("#question-id").text("");
+                $("#question-id").append(`
+                    <div> Page ${index} / ${count}</div>
+                    <p>لا يوجد المزيد من الاسئلة</p>
+                        <button id="btn-next-id"> السؤال الاول </button>
+                        <button id="btn-prev-id"> السؤال الاخير </button>
+                    </div>
+                    `);
+                    $("[id^=btn-]").on("click", function(e){
+                        if(e.target.id === "btn-next-id"){
+                            window.location.search = `?page=${1}`
+                        } else {
+                            window.location.search = `?page=${count}`
+                        }
+                });
+            }
         }
         loadPage();
     </script>

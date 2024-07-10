@@ -45,13 +45,14 @@ function updateKeyword(Keyword){
 }
 
 router.get("/count", function (req, res, next) {
-  res.send(JSON.stringify({count: items.length}));
+  const items = getAllItems();
+  res.json({count: items.length});
 });
 
 router.get("/:number", function (req, res, next) {
   const { number } = req.params;
   const items = getAllItems();
-  res.send(JSON.stringify(items[number - 1]));
+  res.json(items[number - 1]);
 });
 
 router.post("/", function (req, res, next) {
@@ -60,14 +61,6 @@ router.post("/", function (req, res, next) {
     updateKeyword(Keyword);
   }
   res.json({success:true});
-});
-
-router.post('/', function(req, res, next) {
-  const {questions, title} = req.body;
-  const data = fs.readFileSync('questions.json', 'utf8');
-  const questionsJSON = JSON.parse(data);
-  
-  fs.writeFileSync(req.body.file)
 });
 
 module.exports = router;
