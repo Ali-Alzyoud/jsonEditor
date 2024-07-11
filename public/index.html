@@ -84,24 +84,31 @@
                     localStorage.setItem("name", reviewed);
                 });
                 $("#title-id").on("input",function(e){
-                    question.Title = e.target.value;
                     setIsModified();
                 });
                 $("[id^=q-]").on("input",function(e){
-                    const qIndex = Number(e.target.id.split("-")[1]);
-                    question.Questions[qIndex][0] = e.target.value;
                     setIsModified();
                 })
                 $("[id^=n-]").on("input",function(e){
-                    const nIndex = Number(e.target.id.split("-")[1]);
-                    question.Questions[nIndex][1] = e.target.value;
                     setIsModified();
                 })
+
+                $("#title-id").on("change",function(e){
+                    setIsModified();
+                });
+                $("[id^=q-]").on("change",function(e){
+                    setIsModified();
+                })
+                $("[id^=n-]").on("change",function(e){
+                    setIsModified();
+                })
+
                 $("[id^=btn-]").on("click", function(e){
                     if(e.target.id === "btn-reviewed-id") {
                         isModified = true;
                     }
                     if(!isModified){
+                        /*If not modified just change the page*/
                         if(e.target.id === "btn-next-id"){
                             index++;
                         }else {
@@ -110,10 +117,20 @@
                         index = Math.max(index, 0);
                         window.location.search = `?page=${index}`
                     } else {
+                        /*If modified check name first*/
                         if(!reviewed){
                             alert("الرجاء ادخال الاسم اولا")
                             return;
                         }
+
+                        /* Update Question before submit */
+                        for(let i = 0 ; i < 3 ; i++){
+                            question.Questions[i][0]= $(`#q-${i}`).val();
+                            question.Questions[i][1]= $(`#n-${i}`).val();
+                        }
+                        question.Title = $(`#title-id`).val();
+
+                        /* Send update to BE */
                         try {
                             fetch('/questions/', {
                                 method: 'POST',
@@ -147,8 +164,11 @@
                 });
             }
             function setIsModified(){
-                $("#btn-next-id").text("حفظ التعديلات")
+                $("#btn-next-id").text("حفظ التعديلات");
+                $("#btn-next-id").css({"background":"red"});
+                $("#btn-reviewed-id").css({"background":"red"});
                 $("#btn-prev-id").css({"display":"none"});
+                $("#btn-reviewed-id").css({"display":"none"});
                 isModified = true;
             }
         }
