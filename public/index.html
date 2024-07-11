@@ -103,7 +103,7 @@
                     setIsModified();
                 })
 
-                $("[id^=btn-]").on("click", function(e){
+                $("[id^=btn-]").on("click", async function(e){
                     if(e.target.id === "btn-reviewed-id") {
                         isModified = true;
                     }
@@ -132,7 +132,7 @@
 
                         /* Send update to BE */
                         try {
-                            fetch('/questions/', {
+                            await fetch('/questions/', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json'
