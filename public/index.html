@@ -17,6 +17,11 @@
                 p{
                     font-size: 200%;
                 }
+                #title-id{
+                    padding: 6px;
+                    font-size: 200%;
+                    min-width: 600px;
+                }
         </style>
     </head>
 <body style="direction: rtl;">
@@ -40,6 +45,7 @@
             localStorage.setItem("page",index);
             let count = 0;
             let reviewed = localStorage.getItem("name") || "";
+            let isModified = false;
 
             try {
                 const res = await fetch(`/questions/count`);
@@ -52,7 +58,6 @@
                 const res = await fetch(`/questions/${index}`);
                 const {question, reviewed:reviewedBy} = await res.json();
 
-                let isModified = false;
                 $("#question-id").text("");
                 $("#question-id").append(`
                     <div> Page ${index} / ${count}</div>
@@ -62,8 +67,8 @@
                         ${!reviewedBy? 
                             `<button style="background:red" id="btn-reviewed-id"> هل تمت مراجعته ؟</button>`:
                             `<button id="btn-reviewed-id"> تمت مراجعته من ${reviewedBy}</button>`}
-                        <div>
-                            <p>${question.Title}</p>
+                        <div style="margin:20px">
+                            <span>العنوان : </span><input id="title-id" value="${question.Title}"/>
                             ${question.Questions.map((q, i) => {
                                 return `
                                 <p>السؤال ${i+1}</p>
@@ -71,26 +76,26 @@
                                 <br/>
                                 <textarea style="width:800px;height:100px;padding:16px;" id="n-${i}">${q[1]}</textarea>
                                     `
-                            }).join("</br></br>")}
+                            }).join("</br>")}
                         </div>
                     `);
                 $("#name-id").on("input",function(e){
                     reviewed = e.target.value;
                     localStorage.setItem("name", reviewed);
                 });
+                $("#title-id").on("input",function(e){
+                    question.Title = e.target.value;
+                    setIsModified();
+                });
                 $("[id^=q-]").on("input",function(e){
                     const qIndex = Number(e.target.id.split("-")[1]);
                     question.Questions[qIndex][0] = e.target.value;
-                    $("#btn-next-id").text("حفظ التعديلات");
-                    $("#btn-prev-id").css({"display":"none"});
-                    isModified = true;
+                    setIsModified();
                 })
                 $("[id^=n-]").on("input",function(e){
                     const nIndex = Number(e.target.id.split("-")[1]);
                     question.Questions[nIndex][1] = e.target.value;
-                    $("#btn-next-id").text("حفظ التعديلات")
-                    $("#btn-prev-id").css({"display":"none"});
-                    isModified = true;
+                    setIsModified();
                 })
                 $("[id^=btn-]").on("click", function(e){
                     if(e.target.id === "btn-reviewed-id") {
@@ -140,6 +145,11 @@
                             window.location.search = `?page=${count}`
                         }
                 });
+            }
+            function setIsModified(){
+                $("#btn-next-id").text("حفظ التعديلات")
+                $("#btn-prev-id").css({"display":"none"});
+                isModified = true;
             }
         }
         loadPage();

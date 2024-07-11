@@ -40,12 +40,12 @@ function updateKeyword(Keyword, reviewer){
     });
     return q;
   });
-  fs.writeFileSync("questions.json",JSON.stringify(q2));
+  fs.writeFileSync("questions.json",JSON.stringify(q2,null, 4));
 
   const reviewedData = fs.readFileSync("reviewed.json", "utf8");
   const reviewed = JSON.parse(reviewedData.replace(/(\r\n|\n|\r|\t)/gm, ""));
   reviewed[Keyword.Id] = reviewer || "anonymous";
-  fs.writeFileSync("reviewed.json",JSON.stringify(reviewed));
+  fs.writeFileSync("reviewed.json",JSON.stringify(reviewed,null, 4));
   return founded;
 }
 
